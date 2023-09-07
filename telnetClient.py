@@ -1,24 +1,34 @@
 import re
 import socket
+import sys
 import threading
 
-#targetHost = '52.193.48.235'
-targetHost = '103.41.63.2'
-#targetHost = 'koukoku.shadan.open.ad.jp '
+targetDomainName = sys.argv[1]
+#targetDomainName = 'koukoku.shadan.open.ad.jp'
 targetPort = 23
+if len(sys.argv) > 2 and sys.argv[2]:
+	targetPort = sys.argv[2]
+
+addrs = socket.getaddrinfo(targetDomainName, None)
+for family, kind, proto, canonname, sockaddr in addrs:
+	if proto == 6:
+		targetHost = sockaddr[0]
+		break
 
 # generate TCP socket
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # connect to target host
+#targetHost = '52.193.48.235'
+#targetHost = '103.41.63.2'
 client.connect((targetHost, targetPort))
 
 def receive(client):
 	# logging
-	with open('koukoku.log', 'a', encoding='SJIS') as logFile:
+	with open('koukoku2.log', 'a', encoding='UTF8') as logFile:
 		# receive message
-		try:
-			while True:
+		while True:
+			try:
 				response = client.recv(4096)
 				talk = re.findall("(?<=>> )[^<]*(?=<<)", response.decode('SJIS'))
 				if talk:
@@ -26,8 +36,10 @@ def receive(client):
 					print(message)
 					logFile.write(message + '\n')
 				#print(response,decode())
-		except ConnectionAbortedError:
-			return
+			except ConnectionAbortedError:
+				return
+			except UnicodeDecodeError:
+				print("UnicodeDecodeError")
 
 try:
 	receiveThread = threading.Thread(target=receive, args=(client, ))
