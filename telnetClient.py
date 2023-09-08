@@ -1,26 +1,32 @@
+#!/usr/bin/python3
+
 import re
 import socket
 import sys
 import threading
 
-targetDomainName = sys.argv[1]
+targetDomainNameOrIpAddr = sys.argv[1]
+#print("sys.argv : " + str(sys.argv))
 #targetDomainName = 'koukoku.shadan.open.ad.jp'
 targetPort = 23
 if len(sys.argv) > 2 and sys.argv[2]:
 	targetPort = sys.argv[2]
 
-addrs = socket.getaddrinfo(targetDomainName, None)
-for family, kind, proto, canonname, sockaddr in addrs:
-	if proto == 6:
-		targetHost = sockaddr[0]
-		break
+ipv4regex = r"((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
+if not re.match(ipv4regex, targetDomainNameOrIpAddr):
+	addrs = socket.getaddrinfo(targetDomainNameOrIpAddr, None)
+	for family, kind, proto, canonname, sockaddr in addrs:
+		if proto == 6:
+			targetHost = sockaddr[0]
+			break
+else:
+	targetHost = targetDomainNameOrIpAddr
 
 # generate TCP socket
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+print(targetHost, targetPort, socket.getservbyport(targetPort, 'tcp'))
 # connect to target host
-#targetHost = '52.193.48.235'
-#targetHost = '103.41.63.2'
 client.connect((targetHost, targetPort))
 
 def receive(client):
@@ -48,7 +54,7 @@ try:
 		message = input("")
 		if message == 'quit':
 			break
-		if re.findall("^[a-zA-Z0-9!#$%&'()=~|^@`{:*},./\<>?_\-\[\]" + '"' + "]+$", message):
+		if re.findall(r"^[a-zA-Z0-9!#$%&'()=~|^@`{:*},./\<>?_\-\[\]" + '"' + "]+$", message):
 			message += '。\n'
 		else:
 			message += '\n'
