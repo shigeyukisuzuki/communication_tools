@@ -5,6 +5,9 @@ import socket
 import sys
 import threading
 
+codec = 'cp932'
+#codec = 'SJIS'
+
 targetDomainNameOrIpAddr = sys.argv[1]
 #print("sys.argv : " + str(sys.argv))
 #targetDomainName = 'koukoku.shadan.open.ad.jp'
@@ -36,16 +39,16 @@ def receive(client):
 		while True:
 			try:
 				response = client.recv(4096)
-				talk = re.findall("(?<=>> )[^<]*(?=<<)", response.decode('SJIS'))
+				#print(response.decode(codec), end='')
+				talk = re.findall("(?<=>> )[^<]*(?=<<)", response.decode(codec))
 				if talk:
 					message = talk[0]
 					print(message)
 					logFile.write(message + '\n')
-				#print(response,decode())
 			except ConnectionAbortedError:
 				return
 			except UnicodeDecodeError:
-				print("UnicodeDecodeError")
+				print("UnicodeDecodeError", response.decode(codec))
 
 try:
 	receiveThread = threading.Thread(target=receive, args=(client, ))
@@ -60,18 +63,11 @@ try:
 			message += '\n'
 		# send message
 		try:
-			client.send(message.encode('SJIS'))
-			#print(message.encode('SJIS'))
+			#client.send(message)
+			client.send(message.encode(codec))
+			#print(message.encode(codec))
 		except UnicodeEncodeError:
 			print("UnicodeEncodeError")
 finally:
 	receiveThread.join(timeout=0.3)
 	client.close()
-
-#print(response.decode())
-
-#receiveThread = threading.Thread(target=receive, args=(client, ))
-#sendThread = threading.Thread(target=send, args=(client))
-#receiveThread.start()
-#sendThread.start()
-
