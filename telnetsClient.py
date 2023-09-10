@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import socket
 import ssl
 import sys
@@ -15,4 +16,4 @@ with socket.create_connection((hostname, port)) as sock:
 		#print(ssock.version())
 		while True:
 			response = ssock.recv(4096)
-			print(response.decode('UTF8'), end='')
+			print(response.decode('UTF8'), end='', file=sys.stdout, flush=True)
