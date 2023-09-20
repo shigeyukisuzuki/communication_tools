@@ -1,1 +1,5 @@
+python cursesのドキュメント
+https://docs.python.org/ja/3/howto/curses.html
+https://docs.python.org/ja/3/library/curses.html#module-curses
+
  $ openssl s_client -connect koukoku.shadan.open.ad.jp:992
