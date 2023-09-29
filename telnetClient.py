@@ -13,6 +13,7 @@ def printHelp():
 -i <initial text>: send initial text just after connect
 -d: daemon mode
 -e <codec>: use connecting with specified codec
+-p <port>: use specified port number
 -r <regex>: print text specified by regex
 -s: telnets mode
 -v: verbose print
@@ -21,7 +22,7 @@ def printHelp():
 	exit(1)
 
 # option parse
-optlist, args = getopt.gnu_getopt(sys.argv[1:], 'i:de:r:svh')
+optlist, args = getopt.gnu_getopt(sys.argv[1:], 'i:de:p:r:svh')
 
 if len(args) == 0:
 	printHelp()
@@ -57,6 +58,8 @@ for opt, arg in optlist:
 		daemonMode = True
 	elif opt == '-e':
 		codec = arg
+	elif opt == '-p':
+		targetPort = int(arg)
 	elif opt == '-r':
 		textRegex = arg
 	elif opt == '-s':
