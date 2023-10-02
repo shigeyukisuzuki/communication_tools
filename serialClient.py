@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
+import ctypes
 import getopt
 import getpass
 import re
 import readchar
 import serial
 import serial.tools.list_ports
+import signal
 import socket
 import sys
 import threading
@@ -75,6 +77,17 @@ for opt, arg in optlist:
 	elif opt == '-h':
 		printHelp()
 
+
+# Windows APIのライブラリを読み込む
+user32 = ctypes.windll.user32
+
+# Altキーの仮想キーコード
+VK_MENU = 0x12
+
+def isAltkeyPressed():
+	alt_key_state = user32.GetAsyncKeyState(VK_MENU)
+	return alt_key_state
+
 # receive thread function definition
 def receive(client):
 	# logging
@@ -101,6 +114,8 @@ def receive(client):
 			#logFile.write(message + '\n')
 		except ConnectionAbortedError:
 			return
+		except (AttributeError, serial.serialutil.SerialException):
+			return
 		except UnicodeDecodeError:
 			#print("UnicodeDecodeError", response)
 			continue
@@ -119,28 +134,42 @@ if __name__ == '__main__':
 			initialText += '\n'
 			client.send(initialText.encode(codec))
 
+		## signal handler
+		#def signalHandler(signum, frame):
+		#	signame = signal.Signals(signum).name
+		#	printVerbose(f'Signal handler called with signal {signame} ({signum})', file=sys.stderr)
+		#	client.write("".encode(codec))
+
+		## Set the signal handler and a 5-second alarm
+		#signal.signal(signal.SIGINT, signalHandler)
+
 		# thread start
 		receiveThread = threading.Thread(target=receive, args=(client, ), daemon=True)
 		receiveThread.start()
 
 		while True:
-			if daemonMode:
-				time.sleep(60)
-				continue
-			#message = input("")
-			message = readchar.readchar()
-			#if message == 'pass':
-			#	message = getpass.getpass("")
-			#message += '\n'
-			if message == '':
-				break
-
-			# send message
 			try:
+				if daemonMode:
+					time.sleep(60)
+					continue
+				#message = input("")
+				message = readchar.readkey()
+				#if message == 'pass':
+				#	message = getpass.getpass("")
+				#message += '\n'
+				if message == '':
+					if readchar.readkey() == 'q':
+						break
+				if isAltkeyPressed():
+					message = '' + message
+
+				# send message
 				client.write(message.encode(codec))
-				#print(message.encode(codec))
+				#printVerbose(message, file=sys.stderr)
 			except UnicodeEncodeError:
 				print("UnicodeEncodeError: cannot encode the input")
+			except KeyboardInterrupt:
+				client.write("".encode(codec))
 	finally:
 		receiveThread.join(timeout=0.3)
 		client.close()
