@@ -78,15 +78,18 @@ for opt, arg in optlist:
 		printHelp()
 
 
-# Windows APIのライブラリを読み込む
-user32 = ctypes.windll.user32
+if sys.platform in ("win32", "cygwin"):
+	# Windows APIのライブラリを読み込む
+	user32 = ctypes.windll.user32
+	# Altキーの仮想キーコード
+	VK_MENU = 0x12
+	def isAltkeyPressed():
+		alt_key_state = user32.GetAsyncKeyState(VK_MENU)
+		return alt_key_state
+else:
+	def isAltkeyPressed():
+		return False
 
-# Altキーの仮想キーコード
-VK_MENU = 0x12
-
-def isAltkeyPressed():
-	alt_key_state = user32.GetAsyncKeyState(VK_MENU)
-	return alt_key_state
 
 # receive thread function definition
 def receive(client):
